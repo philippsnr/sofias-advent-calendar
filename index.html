@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#121a37">
 <title>Sofia’s Advent Calendar</title>
@@ -27,17 +27,17 @@
 }
 *,*::before,*::after{box-sizing:inherit}
 [hidden]{display:none!important}
-html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--deep)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--deep);overflow-x:hidden;overflow-x:clip;touch-action:pan-y;overscroll-behavior-x:none;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{
   margin:0;min-height:100%;
   font-family:"Fredoka",ui-rounded,"SF Pro Rounded","Nunito","Segoe UI",system-ui,sans-serif;
   color:var(--snow);
   background:linear-gradient(180deg,#24305f 0%,#24305f 12%,#33448a 45%,#5d6db0 72%,#9aa9e0 90%,#dfe6fb 100%);
   -webkit-font-smoothing:antialiased;
-  overflow-x:hidden;
+  overflow-x:hidden;overflow-x:clip;touch-action:pan-y;
 }
-#snow{position:fixed;inset:0;pointer-events:none;z-index:3}
-main{position:relative;z-index:1;max-width:520px;margin:0 auto}
+#snow{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
+main{position:relative;z-index:1;max-width:520px;margin:0 auto;overflow-x:clip}
 
 /* ---------- Hero ---------- */
 .hero{position:relative;text-align:center;padding:60px 20px 0;isolation:isolate}
@@ -47,7 +47,7 @@ main{position:relative;z-index:1;max-width:520px;margin:0 auto}
 .aurora .a1{left:-10%;top:40px;width:70%;height:90px;background:linear-gradient(90deg,transparent,#3fe0b0,#47c9e6,transparent);transform:rotate(-8deg);animation:drift 16s ease-in-out infinite alternate}
 .aurora .a2{right:-12%;top:20px;width:65%;height:80px;background:linear-gradient(90deg,transparent,#8f7bff,#e07bd8,transparent);transform:rotate(10deg);animation:drift 20s ease-in-out infinite alternate-reverse;opacity:.8}
 @keyframes drift{from{translate:-6% 0}to{translate:8% 14px}}
-.stars{position:absolute;z-index:-1;left:50%;width:100vw;transform:translateX(-50%);top:0;height:420px;pointer-events:none}
+.stars{position:absolute;z-index:-1;left:50%;width:100vw;transform:translateX(-50%);top:0;height:420px;pointer-events:none;overflow:hidden}
 .star{position:absolute;border-radius:50%;background:#fff;animation:twinkle 3.8s ease-in-out infinite}
 @keyframes twinkle{0%,100%{opacity:.9}50%{opacity:.15}}
 .shoot{position:absolute;z-index:-1;top:70px;left:10%;width:110px;height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(255,255,255,0),#fff);transform:rotate(18deg);opacity:0;animation:shoot 12s linear infinite 3s}
@@ -198,7 +198,6 @@ h1 .flake{display:inline-block;color:var(--glow);font-size:.5em;vertical-align:.
 .hatg.tip{animation:tip .9s ease}
 @keyframes tip{0%,100%{transform:none}35%{transform:translate(0,-12px) rotate(-18deg)}65%{transform:translate(0,-4px) rotate(8deg)}}
 .ballg{transition:transform .55s cubic-bezier(.2,.8,.3,1)}
-.cabin-win.off{fill:#3a2a2a}
 #toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));z-index:6;transform:translate(-50%,24px);opacity:0;background:var(--snow);color:var(--ink);padding:10px 18px;border-radius:999px;font-weight:500;font-size:.98rem;box-shadow:0 8px 24px rgba(0,0,0,.25);transition:opacity .35s,transform .35s;pointer-events:none;width:max-content;max-width:calc(100vw - 32px);text-align:center}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 .moon{cursor:pointer}
@@ -501,10 +500,9 @@ function cabin(x,y){
   el("rect",{class:"cabin-wall",x:-20,y:-8,width:40,height:26,rx:2},g);
   el("path",{d:"M-20 -2 H20 M-20 5 H20 M-20 12 H20",stroke:"#5e3a2d",strokeWidth:1,fill:"none","stroke-width":1},g);
   el("path",{class:"cabin-roof",d:"M-27 -6 L0 -28 L27 -6 Q24 -2 20 -5 Q14 -1 8 -5 Q0 0 -8 -5 Q-14 -1 -20 -5 Q-24 -2 -27 -6Z"},g);
-  const w1=el("rect",{class:"cabin-win",x:-13,y:0,width:9,height:9,rx:1.5},g);
-  const w2=el("rect",{class:"cabin-win",x:4,y:0,width:9,height:9,rx:1.5},g);
+  el("rect",{class:"cabin-win",x:-13,y:0,width:9,height:9,rx:1.5},g);
+  el("rect",{class:"cabin-win",x:4,y:0,width:9,height:9,rx:1.5},g);
   smoke(g,11,-32);
-  egg(g,"cabin",()=>{ w1.classList.toggle("off"); w2.classList.toggle("off"); say(x,y-36, w1.classList.contains("off")?"Lights out. Good night!":"Someone’s home again."); });
   el("rect",{x:-4,y:6,width:8,height:12,fill:"#4a2c22"},g);
 }
 function lamp(x,y){
@@ -562,16 +560,6 @@ function sign(x,y,text){
   el("path",{d:`M${-w/2+2} -20 Q${-w/4} -25 0 -21 Q${w/4} -25 ${w/2-2} -20Z`,fill:"#f5f8ff"},g);
   const tx=el("text",{x:0,y:-11,"text-anchor":"middle","dominant-baseline":"central",fill:"#fff","font-size":11,"font-weight":600,"font-family":"Fredoka,sans-serif"},g); tx.textContent=text;
   el("ellipse",{cx:0,cy:18,rx:10,ry:3,fill:"#0e1530",opacity:.2},g);
-}
-function gifts(x,y){
-  const g=el("g",{transform:`translate(${x.toFixed(1)} ${y.toFixed(1)})`},scenery);
-  el("ellipse",{cx:2,cy:13,rx:22,ry:3.5,fill:"#0e1530",opacity:.2},g);
-  [[-10,0,16,14,"#a50044"],[6,4,13,10,"#1f5fb0"],[-4,-11,11,11,"#2c6656"]].forEach(([gx,gy,w,h,c])=>{
-    el("rect",{x:gx-w/2,y:gy-h/2,width:w,height:h,rx:2,fill:c},g);
-    el("rect",{x:gx-1.3,y:gy-h/2,width:2.6,height:h,fill:"#ffcf73"},g);
-    el("path",{d:`M${gx} ${gy-h/2} q-4 -5 -6 -1 q2 2 6 1 q4 1 6 -1 q-2 -4 -6 1`,fill:"#ffcf73"},g);
-  });
-  el("path",{d:"M-18 -7 Q-10 -10 -2 -7 L-2 -6 L-18 -6Z",fill:"#f5f8ff"},g);
 }
 function canes(x,y){
   const g=el("g",{transform:`translate(${x.toFixed(1)} ${y.toFixed(1)})`},scenery);
@@ -671,13 +659,57 @@ function fox(x,y){
   egg(g,"fox",()=>say(x,y-22,"Shhh… the fox is dreaming of you."));
 }
 
+function reindeer(x,y){
+  const g=el("g",{transform:`translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${x<W/2?1:-1} 1)`},scenery);
+  el("ellipse",{cx:2,cy:21,rx:21,ry:3.5,fill:"#0e1530",opacity:.22},g);
+  [[-11,"#8a5a3c"],[-5,"#a86b45"],[6,"#8a5a3c"],[11,"#a86b45"]].forEach(([lx,c])=>{ el("rect",{x:lx-1.5,y:4,width:3.2,height:16,rx:1.5,fill:c},g); el("rect",{x:lx-1.8,y:17.5,width:3.8,height:3,rx:1,fill:"#3b2414"},g); });
+  el("circle",{cx:-15,cy:-2,r:3.2,fill:"#f5f8ff"},g);
+  el("ellipse",{cx:0,cy:2,rx:15,ry:8.5,fill:"#a86b45"},g);
+  el("ellipse",{cx:1,cy:6,rx:10,ry:3.6,fill:"#d9a77c"},g);
+  el("path",{d:"M6 -1 L12 -15 L19 -12 L15 2Z",fill:"#a86b45"},g);
+  el("path",{d:"M15 -20 L12 -31 M13 -26 L8 -29 M19 -20 L21 -31 M20.5 -26 L25 -29",fill:"none",stroke:"#e6c896","stroke-width":2,"stroke-linecap":"round"},g);
+  el("path",{d:"M12 -18 Q7 -21 8 -16Z",fill:"#8a5a3c"},g);
+  el("ellipse",{cx:19,cy:-15,rx:7.5,ry:5.2,fill:"#a86b45",transform:"rotate(12 19 -15)"},g);
+  el("circle",{cx:19.5,cy:-17,r:1.2,fill:"#1b2547"},g);
+  el("circle",{cx:26.5,cy:-13.5,r:5,fill:"url(#gLamp)"},g);
+  el("circle",{cx:26.5,cy:-13.5,r:2.7,fill:"#e0314f"},g);
+  el("path",{d:"M9 -3 Q13 0 17 -4",fill:"none",stroke:"#a50044","stroke-width":2.6,"stroke-linecap":"round"},g);
+  el("circle",{cx:13,cy:0,r:1.9,fill:"#ffcf73"},g);
+}
+function gingerbread(x,y){
+  const g=el("g",{transform:`translate(${x.toFixed(1)} ${y.toFixed(1)})`},scenery);
+  el("ellipse",{cx:0,cy:20,rx:15,ry:3.5,fill:"#0e1530",opacity:.22},g);
+  const m=el("g",{class:"hatg"},g), c="#c47a3e";
+  el("path",{d:"M-12 -5 L12 -5 M-4 5 L-8 16 M4 5 L8 16",fill:"none",stroke:c,"stroke-width":7,"stroke-linecap":"round"},m);
+  el("ellipse",{cx:0,cy:2,rx:8,ry:9.5,fill:c},m);
+  el("circle",{cx:0,cy:-13,r:7.5,fill:c},m);
+  el("path",{d:"M-13 -8 V-2 M13 -8 V-2 M-10 15 L-5 16.5 M10 15 L5 16.5",fill:"none",stroke:"#fff","stroke-width":1.4,"stroke-linecap":"round"},m);
+  el("circle",{cx:-2.6,cy:-14.5,r:1.1,fill:"#3b2414"},m); el("circle",{cx:2.6,cy:-14.5,r:1.1,fill:"#3b2414"},m);
+  el("path",{d:"M-3 -10.5 Q0 -8 3 -10.5",fill:"none",stroke:"#fff","stroke-width":1.2,"stroke-linecap":"round"},m);
+  el("circle",{cx:0,cy:-1,r:1.7,fill:"#a50044"},m); el("circle",{cx:0,cy:5,r:1.7,fill:"#1f5fb0"},m);
+  egg(g,"gingerbread",()=>{ m.classList.remove("tip"); void m.getBBox(); m.classList.add("tip"); say(x,y-30,["Catch me if you can!","Don’t eat me, Sofia!","I smell like cinnamon."][Math.floor(Math.random()*3)]); });
+}
+function wreath(x,y){
+  const g=el("g",{transform:`translate(${x.toFixed(1)} ${y.toFixed(1)})`},scenery);
+  el("ellipse",{cx:0,cy:19,rx:26,ry:3.5,fill:"#0e1530",opacity:.2},g);
+  [-20,20].forEach(px=>{ el("rect",{x:px-2.5,y:-14,width:5,height:33,rx:1.5,fill:"#6b4a3a"},g); el("path",{d:`M${px-4} -13 Q${px} -19 ${px+4} -13Z`,fill:"#f5f8ff"},g); });
+  el("rect",{x:-24,y:-8,width:48,height:4,rx:1.5,fill:"#8a5a44"},g);
+  el("rect",{x:-24,y:6,width:48,height:4,rx:1.5,fill:"#8a5a44"},g);
+  el("path",{d:"M-24 -8 Q-12 -11 0 -8.5 Q12 -11 24 -8Z",fill:"#f5f8ff"},g);
+  el("circle",{cx:0,cy:0,r:10,fill:"none",stroke:"#22544a","stroke-width":7},g);
+  el("circle",{cx:0,cy:0,r:10,fill:"none",stroke:"#3f8a6f","stroke-width":2.4,"stroke-dasharray":"3 4"},g);
+  [[-7,-6],[7,-6],[-9,3],[3,-10]].forEach(([bx,by])=>el("circle",{cx:bx,cy:by,r:1.7,fill:"#e0314f"},g));
+  el("path",{d:"M0 9 L-6 5 L-6 12Z M0 9 L6 5 L6 12Z M-1.5 9 L-4 16 M1.5 9 L4 16",fill:"#a50044",stroke:"#a50044","stroke-width":1.6,"stroke-linejoin":"round"},g);
+  el("circle",{cx:0,cy:9,r:1.8,fill:"#ffcf73"},g);
+}
+
 // signature props, placed beside the trail
-const props = [[1,"canes"],[3,"lamp"],[4,"sign","Keep going!"],[5,"cabin"],[7,"snowman"],[8,"fox"],[9,"lamp"],[10,"pond"],[11,"sign","Halfway!"],[12,"cabin"],[13,"sled"],[14,"lamp"],[15,"canes"],[16,"snowman"],[18,"pond"],[19,"cabin"],[20,"sign","Almost there!"],[21,"lamp"]];
+const props = [[1,"canes"],[3,"lamp"],[4,"sign","Keep going!"],[5,"cabin"],[7,"snowman"],[8,"fox"],[9,"reindeer"],[10,"pond"],[11,"sign","Halfway!"],[13,"sled"],[14,"gingerbread"],[16,"wreath"],[18,"lamp"],[20,"sign","Almost there!"]];
 props.forEach(([k,type,arg])=>{
   const y=TOP+k*GAP+GAP/2, nx=nearX(y);
   const x = nx<W/2 ? Math.min(W-48, nx+150) : Math.max(48, nx-150);
   taken.push({x,y,r:type==="pond"?42:32,sled:type==="sled"});
-  ({lamp,cabin,snowman,pond,sign,gifts,canes,sled,fox})[type](x,y,arg);
+  ({lamp,cabin,snowman,pond,sign,canes,sled,fox,reindeer,gingerbread,wreath})[type](x,y,arg);
 });
 function placeholder(i){
   const c=[["#a50044","#ec5a8f"],["#1f5fb0","#6aa6ee"],["#2c6656","#5fae94"]][i%3];
@@ -1005,12 +1037,10 @@ function say(x,y,text){
 }
 const toastEl=document.getElementById("toast"); let toastT;
 function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>toastEl.classList.remove("show"),3200); }
-const EGG_NAMES=["penguin","moon","title","snowman","fox","cabin","pond","sled"];
 function found(name){
   let f=[]; try{ f=JSON.parse(localStorage.getItem("wintertrail:eggs")||"[]"); }catch(e){}
   if(f.includes(name)) return;
   f.push(name); try{ localStorage.setItem("wintertrail:eggs",JSON.stringify(f)); }catch(e){}
-  setTimeout(()=>toast(`Secret found! ${f.length} of ${EGG_NAMES.length} ✨`),900);
 }
 const moon=document.getElementById("moon");
 moon.addEventListener("click",()=>{ moon.classList.add("wink"); setTimeout(()=>moon.classList.remove("wink"),2600); toast("The moon says: sweet dreams, Sofia 🌙"); found("moon"); });
