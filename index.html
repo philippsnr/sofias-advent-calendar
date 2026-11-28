@@ -139,6 +139,16 @@ h1 .flake{display:inline-block;color:var(--glow);font-size:.5em;vertical-align:.
 .candle.lit .flame{opacity:1;transform-box:fill-box;transform-origin:center bottom;animation:flick 1.6s ease-in-out infinite}
 .candle.lit .cglow{opacity:1}
 @keyframes flick{0%,100%{transform:scale(1) rotate(-3deg)}50%{transform:scale(.88,1.08) rotate(3deg)}}
+.tt{cursor:pointer}
+.tt:focus{outline:none}
+.tt .vinyl{transform-box:fill-box;transform-origin:center}
+.tt.playing .vinyl{animation:spin 1.8s linear infinite}
+.tt .ttglow{opacity:0;transition:opacity .6s}
+.tt.playing .ttglow{opacity:1}
+.tt .note{font:600 13px Fredoka,sans-serif;fill:#ffcf73;opacity:0}
+.tt.playing .note{animation:note 2.1s ease-out infinite}
+@keyframes note{0%{opacity:0;transform:translate(0,0)}20%{opacity:1}100%{opacity:0;transform:translate(6px,-26px)}}
+#yt{position:fixed;left:-400px;top:0;width:200px;height:200px;opacity:0;pointer-events:none}
 .xmas{font:600 30px Fredoka,ui-rounded,sans-serif;fill:#a50044;text-anchor:middle;letter-spacing:.01em}
 
 /* penguin */
@@ -261,7 +271,7 @@ button:focus-visible{outline:3px solid var(--blau);outline-offset:2px}
 .gift button{margin-top:24px;background:var(--snow);color:var(--ink)}
 
 @media (prefers-reduced-motion:reduce){
-  .sbody.ride,.pg .jump,.pg .bang,.pg .wob.shake,.fish.go,.splash.go,.polaroid,.aurora i,.star,.shoot,.puff,.zzz,.sleigh,.hatg.tip,.candle.lit .flame,.bubble,.lit .bulbs,.treelights circle.on,.st.open .halo,.st.pop .body,#buddy .wing,#buddy.moving .hop,.shake,dialog[open] .sheet,#finale.show .lidg,#finale.show .rays{animation:none}
+  .sbody.ride,.pg .jump,.pg .bang,.pg .wob.shake,.fish.go,.splash.go,.polaroid,.aurora i,.star,.shoot,.puff,.zzz,.sleigh,.hatg.tip,.tt.playing .vinyl,.tt.playing .note,.candle.lit .flame,.bubble,.lit .bulbs,.treelights circle.on,.st.open .halo,.st.pop .body,#buddy .wing,#buddy.moving .hop,.shake,dialog[open] .sheet,#finale.show .lidg,#finale.show .rays{animation:none}
   #finale.show .rays{opacity:.5}
   .bar i,#buddy{transition:none}
 }
@@ -745,6 +755,50 @@ function adventwreath(x,y){
     CANDLES.push(c);
   });
 }
+function turntable(x,y){
+  const g=el("g",{transform:`translate(${x.toFixed(1)} ${y.toFixed(1)})`,role:"button",tabindex:"0","aria-label":"Play music"},scenery);
+  g.classList.add("tt");
+  el("circle",{class:"ttglow",cx:0,cy:-4,r:40,fill:"url(#gLamp)"},g);
+  el("ellipse",{cx:0,cy:15,rx:29,ry:4,fill:"#0e1530",opacity:.25},g);
+  el("rect",{x:-26,y:-3,width:52,height:16,rx:3,fill:"#8a5a44"},g);
+  el("rect",{x:-26,y:8,width:52,height:5,rx:2,fill:"#6b4a3a"},g);
+  el("circle",{cx:13,cy:3,r:1.8,fill:"#ffcf73"},g); el("circle",{cx:19,cy:3,r:1.8,fill:"#ffcf73"},g);
+  el("path",{d:"M-24 -3 L-20 -13 H20 L24 -3Z",fill:"#a8705a"},g);
+  const tilt=el("g",{transform:"translate(-4 -8) scale(1 .36)"},g);
+  const v=el("g",{class:"vinyl"},tilt);
+  el("circle",{r:16,fill:"#1b2547"},v);
+  el("circle",{r:12,fill:"none",stroke:"#2e3a66","stroke-width":1},v);
+  el("circle",{r:8.5,fill:"none",stroke:"#2e3a66","stroke-width":1},v);
+  el("path",{d:"M0 -15 A15 15 0 0 1 12 -9 L0 0Z",fill:"#fff",opacity:.18},v);
+  el("circle",{r:5,fill:"#a50044"},v); el("circle",{r:1.2,fill:"#ffcf73"},v);
+  el("path",{d:"M19 -14 L15 -6 L8 -7",fill:"none",stroke:"#e6ebf7","stroke-width":1.8,"stroke-linecap":"round","stroke-linejoin":"round"},g);
+  el("circle",{cx:19,cy:-14,r:2.6,fill:"#e6ebf7"},g);
+  ["♪","♫","♪"].forEach((n,i)=>{ const t=el("text",{class:"note",x:-10+i*9,y:-20},g); t.textContent=n; t.style.animationDelay=(i*.7)+"s"; });
+  const tap=()=>toggleMusic(g);
+  g.addEventListener("click",e=>{ e.stopPropagation(); tap(); });
+  g.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); tap(); } });
+}
+/* music: Bryce Vine "Drew Barrymore", audio only via a hidden YouTube player */
+const SONG_ID="kudi8OtMu9s";
+let YT_PLAYER=null, ytReady=false, TT=null, playing=false, playWatch;
+window.onYouTubeIframeAPIReady=()=>{
+  YT_PLAYER=new YT.Player("yt",{host:"https://www.youtube-nocookie.com",width:200,height:200,videoId:SONG_ID,
+    playerVars:{playsinline:1,controls:0,rel:0,disablekb:1,fs:0},
+    events:{onReady:()=>{ytReady=true;},onStateChange:e=>{
+      if(e.data===1){ playing=true; clearTimeout(playWatch); TT&&TT.classList.add("playing"); }
+      else if(e.data===0||e.data===2){ playing=false; TT&&TT.classList.remove("playing"); if(e.data===0) YT_PLAYER.seekTo(0,true), YT_PLAYER.pauseVideo(); }
+    }}});
+};
+(function(){ const d=document.createElement("div"); d.id="yt"; document.body.appendChild(d); const sc=document.createElement("script"); sc.src="https://www.youtube.com/iframe_api"; sc.async=true; document.head.appendChild(sc); })();
+function toggleMusic(g){
+  TT=g;
+  if(!ytReady){ say(...ttPos(),"One sec, warming up the record…"); return; }
+  if(playing){ YT_PLAYER.pauseVideo(); return; }
+  YT_PLAYER.setVolume(100); YT_PLAYER.playVideo();
+  clearTimeout(playWatch); playWatch=setTimeout(()=>{ if(!playing) say(...ttPos(),"Tap me once more 🎶"); },2500);
+  found("turntable");
+}
+function ttPos(){ const m=TT.transform.baseVal.consolidate().matrix; return [m.e,m.f-34]; }
 function reindeer(x,y){
   const g=el("g",{transform:`translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${x<W/2?1:-1} 1)`},scenery);
   el("ellipse",{cx:2,cy:21,rx:21,ry:3.5,fill:"#0e1530",opacity:.22},g);
@@ -790,12 +844,12 @@ function wreath(x,y){
 }
 
 // signature props, placed beside the trail
-const props = [[1,"canes"],[2,"mailbox"],[3,"lamp"],[4,"sign","Keep going!"],[5,"cabin"],[6,"nutcracker"],[7,"snowman"],[8,"fox"],[9,"reindeer"],[10,"pond"],[11,"sign","Halfway!"],[12,"adventwreath"],[13,"sled"],[14,"gingerbread"],[15,"polarbear"],[16,"wreath"],[17,"tomte"],[20,"sign","Almost there!"],[21,"lamp"]];
+const props = [[1,"canes"],[2,"mailbox"],[3,"lamp"],[4,"sign","Keep going!"],[5,"cabin"],[6,"turntable"],[7,"snowman"],[8,"fox"],[9,"reindeer"],[10,"pond"],[11,"sign","Halfway!"],[12,"adventwreath"],[13,"sled"],[14,"gingerbread"],[15,"polarbear"],[16,"wreath"],[17,"tomte"],[19,"nutcracker"],[20,"sign","Almost there!"],[21,"lamp"]];
 props.forEach(([k,type,arg])=>{
   const y=TOP+k*GAP+GAP/2, nx=nearX(y);
   const x = nx<W/2 ? Math.min(W-48, nx+150) : Math.max(48, nx-150);
   taken.push({x,y,r:type==="pond"?42:32,sled:type==="sled"});
-  ({lamp,cabin,snowman,pond,sign,canes,sled,fox,reindeer,gingerbread,wreath,nutcracker,mailbox,polarbear,tomte,adventwreath})[type](x,y,arg);
+  ({lamp,cabin,snowman,pond,sign,canes,sled,fox,reindeer,gingerbread,wreath,nutcracker,mailbox,polarbear,tomte,adventwreath,turntable})[type](x,y,arg);
 });
 function placeholder(i){
   const c=[["#a50044","#ec5a8f"],["#1f5fb0","#6aa6ee"],["#2c6656","#5fae94"]][i%3];
