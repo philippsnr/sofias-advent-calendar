@@ -1054,6 +1054,7 @@ function render(popN){
   updateNotice();
   document.getElementById("testbar").hidden=!preview;
   placeBuddy(!!popN);
+  updateSnow();
   renderPhotos();
   if(popN){ void stations[popN-1].getBBox(); stations[popN-1].classList.add("pop"); }
 }
@@ -1066,7 +1067,7 @@ function updateNotice(){
   } else if(solved>=TOTAL){ notice.hidden=false; notice.textContent="All 24 ornaments are glowing. Merry Christmas, Sofia."; }
   else notice.hidden=true;
 }
-setInterval(updateNotice,30000);
+setInterval(()=>{ updateNotice(); updateSnow(); },30000);
 
 /* ---------- Sheet ---------- */
 const sheet=document.getElementById("sheet"), body=document.getElementById("sheetBody");
@@ -1200,7 +1201,19 @@ const cv=document.getElementById("snow"), cx=cv.getContext("2d");
 let flakes=[], extra=[], running=false;
 function size(){ cv.width=innerWidth*devicePixelRatio; cv.height=innerHeight*devicePixelRatio; cx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0); }
 size(); addEventListener("resize",size);
-for(let i=0;i<90;i++){ const z=Math.random(); flakes.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:.7+z*2.8,s:.2+z*.9,d:Math.random()*6,o:.35+z*.6}); }
+/* snow gets a little thicker every day until Christmas Eve
+   (in preview mode it follows the solved stations instead, so it can be tested) */
+const SNOW_MIN=60, SNOW_MAX=230;
+let snowCount=SNOW_MIN, snowSpeed=1;
+function snowLevel(){
+  if(preview) return Math.min(1,solved/TOTAL);
+  const now=new Date(), y=CONFIG.YEAR;
+  if(now<new Date(y,11,1)) return 0;
+  if(now>=new Date(y,11,24)) return 1;
+  return (now.getDate()-1)/23;
+}
+function updateSnow(){ const l=snowLevel(); snowCount=Math.round(SNOW_MIN+(SNOW_MAX-SNOW_MIN)*l); snowSpeed=1+l*.45; }
+for(let i=0;i<SNOW_MAX;i++){ const z=Math.random(); flakes.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:.7+z*2.8,s:.2+z*.9,d:Math.random()*6,o:.35+z*.6}); }
 const COLS=["#ffcf73","#ec5a8f","#6aa6ee","#f5f8ff"];
 function burst(){ if(reduce) return; const ox=innerWidth*(.3+Math.random()*.4), oy=innerHeight*(.3+Math.random()*.15); for(let i=0;i<110;i++){ const a=Math.random()*Math.PI*2, v=2+Math.random()*7; extra.push({x:ox,y:oy,vx:Math.cos(a)*v,vy:Math.sin(a)*v-2,r:1.8+Math.random()*3.2,life:120+Math.random()*40,c:COLS[i%4],star:i%5===0}); } kick(); }
 function sparkle(){ if(reduce) return; for(let i=0;i<46;i++) extra.push({x:innerWidth/2,y:innerHeight*.5,vx:(Math.random()-.5)*7,vy:(Math.random()-.95)*7,r:1.5+Math.random()*2.6,life:85,c:i%2?"#ffcf73":"#f5f8ff",star:i%4===0}); kick(); }
@@ -1208,8 +1221,8 @@ function starPath(x,y,r){ cx.beginPath(); for(let k=0;k<10;k++){ const a=k*Math.
 function tick(t){
   cx.clearRect(0,0,innerWidth,innerHeight);
   cx.fillStyle="#f5f8ff";
-  for(const f of flakes){
-    if(!reduce){ f.y+=f.s; f.x+=Math.sin(t/1700+f.d)*.35; if(f.y>innerHeight+5){f.y=-5;f.x=Math.random()*innerWidth;} }
+  for(let i=0;i<snowCount;i++){ const f=flakes[i];
+    if(!reduce){ f.y+=f.s*snowSpeed; f.x+=Math.sin(t/1700+f.d)*.35; if(f.y>innerHeight+5){f.y=-5;f.x=Math.random()*innerWidth;} }
     cx.globalAlpha=f.o;
     if(hearts>Date.now()){ const s=f.r*1.6+1.5; cx.fillStyle=f.d>3?"#ff7aa2":"#ec5a8f"; cx.beginPath(); cx.moveTo(f.x,f.y+s*.35); cx.bezierCurveTo(f.x-s*1.1,f.y-s*.4,f.x-s*.4,f.y-s*1.1,f.x,f.y-s*.45); cx.bezierCurveTo(f.x+s*.4,f.y-s*1.1,f.x+s*1.1,f.y-s*.4,f.x,f.y+s*.35); cx.fill(); cx.fillStyle="#f5f8ff"; }
     else { cx.beginPath(); cx.arc(f.x,f.y,f.r,0,7); cx.fill(); }
