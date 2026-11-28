@@ -780,11 +780,12 @@ function turntable(x,y){
 }
 /* music: Bryce Vine "Drew Barrymore", audio only via a hidden YouTube player */
 const SONG_ID="kudi8OtMu9s";
-let YT_PLAYER=null, ytReady=false, TT=null, playing=false, playWatch;
+let YT_PLAYER=null, ytReady=false, ytFailed=false, wantPlay=false, TT=null, playing=false, playWatch;
+setTimeout(()=>{ if(!ytReady){ ytFailed=true; if(wantPlay){ wantPlay=false; TT&&TT.classList.remove("playing"); } } },15000);
 window.onYouTubeIframeAPIReady=()=>{
   YT_PLAYER=new YT.Player("yt",{host:"https://www.youtube-nocookie.com",width:200,height:200,videoId:SONG_ID,
     playerVars:{playsinline:1,controls:0,rel:0,disablekb:1,fs:0},
-    events:{onReady:()=>{ytReady=true;},onStateChange:e=>{
+    events:{onReady:()=>{ ytReady=true; ytFailed=false; if(wantPlay){ wantPlay=false; startMusic(); } },onError:()=>{ ytFailed=true; },onStateChange:e=>{
       if(e.data===1){ playing=true; clearTimeout(playWatch); TT&&TT.classList.add("playing"); }
       else if(e.data===0||e.data===2){ playing=false; TT&&TT.classList.remove("playing"); if(e.data===0) YT_PLAYER.seekTo(0,true), YT_PLAYER.pauseVideo(); }
     }}});
@@ -792,11 +793,15 @@ window.onYouTubeIframeAPIReady=()=>{
 (function(){ const d=document.createElement("div"); d.id="yt"; document.body.appendChild(d); const sc=document.createElement("script"); sc.src="https://www.youtube.com/iframe_api"; sc.async=true; document.head.appendChild(sc); })();
 function toggleMusic(g){
   TT=g;
-  if(!ytReady){ say(...ttPos(),"One sec, warming up the record…"); return; }
-  if(playing){ YT_PLAYER.pauseVideo(); return; }
-  YT_PLAYER.setVolume(100); YT_PLAYER.playVideo();
-  clearTimeout(playWatch); playWatch=setTimeout(()=>{ if(!playing) say(...ttPos(),"Tap me once more 🎶"); },2500);
   found("turntable");
+  if(playing){ YT_PLAYER.pauseVideo(); return; }
+  if(ytFailed){ say(...ttPos(),"The record player can’t reach the music right now."); return; }
+  if(!ytReady){ wantPlay=true; TT.classList.add("playing"); return; }
+  startMusic();
+}
+function startMusic(){
+  YT_PLAYER.unMute(); YT_PLAYER.setVolume(100); YT_PLAYER.playVideo();
+  clearTimeout(playWatch); playWatch=setTimeout(()=>{ if(!playing){ TT.classList.remove("playing"); say(...ttPos(),"Tap me once more 🎶"); } },3000);
 }
 function ttPos(){ const m=TT.transform.baseVal.consolidate().matrix; return [m.e,m.f-34]; }
 function reindeer(x,y){
