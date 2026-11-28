@@ -148,7 +148,9 @@ h1 .flake{display:inline-block;color:var(--glow);font-size:.5em;vertical-align:.
 .tt .note{font:600 13px Fredoka,sans-serif;fill:#ffcf73;opacity:0}
 .tt.playing .note{animation:note 2.1s ease-out infinite}
 @keyframes note{0%{opacity:0;transform:translate(0,0)}20%{opacity:1}100%{opacity:0;transform:translate(6px,-26px)}}
-#yt{position:fixed;left:-400px;top:0;width:200px;height:200px;opacity:0;pointer-events:none}
+#ytwrap{position:absolute;left:-400px;top:0;width:60px;height:40px;overflow:hidden;opacity:0;z-index:2;pointer-events:none}
+#ytwrap.armed{pointer-events:auto}
+#ytwrap iframe,#ytwrap #yt{position:absolute;left:50%;top:50%;width:200px;height:200px;transform:translate(-50%,-50%);border:0}
 .xmas{font:600 30px Fredoka,ui-rounded,sans-serif;fill:#a50044;text-anchor:middle;letter-spacing:.01em}
 
 /* penguin */
@@ -774,23 +776,36 @@ function turntable(x,y){
   el("path",{d:"M19 -14 L15 -6 L8 -7",fill:"none",stroke:"#e6ebf7","stroke-width":1.8,"stroke-linecap":"round","stroke-linejoin":"round"},g);
   el("circle",{cx:19,cy:-14,r:2.6,fill:"#e6ebf7"},g);
   ["♪","♫","♪"].forEach((n,i)=>{ const t=el("text",{class:"note",x:-10+i*9,y:-20},g); t.textContent=n; t.style.animationDelay=(i*.7)+"s"; });
+  TT_HIT=el("rect",{x:-30,y:-24,width:60,height:40,fill:"transparent"},g);
+  TT=g;
   const tap=()=>toggleMusic(g);
   g.addEventListener("click",e=>{ e.stopPropagation(); tap(); });
   g.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); tap(); } });
 }
 /* music: Bryce Vine "Drew Barrymore", audio only via a hidden YouTube player */
 const SONG_ID="kudi8OtMu9s";
-let YT_PLAYER=null, ytReady=false, ytFailed=false, wantPlay=false, TT=null, playing=false, playWatch;
+let YT_PLAYER=null, ytReady=false, ytFailed=false, wantPlay=false, TT=null, TT_HIT=null, playing=false, playWatch, everPlayed=false;
+/* iPhones only allow sound when the tap lands inside the player itself. So until the song has
+   played once, the invisible player sits exactly on top of the record player and catches the tap.
+   After that first play, the page can start and stop it on its own. */
+function placePlayer(){
+  const w=document.getElementById("ytwrap"); if(!w||!TT_HIT) return;
+  const r=TT_HIT.getBoundingClientRect();
+  w.style.left=(r.left+scrollX)+"px"; w.style.top=(r.top+scrollY)+"px"; w.style.width=r.width+"px"; w.style.height=r.height+"px";
+  w.classList.toggle("armed", ytReady && !everPlayed && !ytFailed);
+}
 setTimeout(()=>{ if(!ytReady){ ytFailed=true; if(wantPlay){ wantPlay=false; TT&&TT.classList.remove("playing"); } } },15000);
 window.onYouTubeIframeAPIReady=()=>{
   YT_PLAYER=new YT.Player("yt",{host:"https://www.youtube-nocookie.com",width:200,height:200,videoId:SONG_ID,
     playerVars:{playsinline:1,controls:0,rel:0,disablekb:1,fs:0},
-    events:{onReady:()=>{ ytReady=true; ytFailed=false; if(wantPlay){ wantPlay=false; startMusic(); } },onError:()=>{ ytFailed=true; },onStateChange:e=>{
-      if(e.data===1){ playing=true; clearTimeout(playWatch); TT&&TT.classList.add("playing"); }
+    events:{onReady:()=>{ ytReady=true; ytFailed=false; placePlayer(); if(wantPlay){ wantPlay=false; startMusic(); } },onError:()=>{ ytFailed=true; placePlayer(); },onStateChange:e=>{
+      if(e.data===3&&!everPlayed){ TT&&TT.classList.add("playing"); }
+      if(e.data===1){ playing=true; everPlayed=true; placePlayer(); clearTimeout(playWatch); TT&&TT.classList.add("playing"); found("turntable"); }
       else if(e.data===0||e.data===2){ playing=false; TT&&TT.classList.remove("playing"); if(e.data===0) YT_PLAYER.seekTo(0,true), YT_PLAYER.pauseVideo(); }
     }}});
 };
-(function(){ const d=document.createElement("div"); d.id="yt"; document.body.appendChild(d); const sc=document.createElement("script"); sc.src="https://www.youtube.com/iframe_api"; sc.async=true; document.head.appendChild(sc); })();
+(function(){ const w=document.createElement("div"); w.id="ytwrap"; w.setAttribute("aria-hidden","true"); const d=document.createElement("div"); d.id="yt"; w.appendChild(d); document.body.appendChild(w);
+  addEventListener("resize",placePlayer); new ResizeObserver(placePlayer).observe(document.querySelector("main")); setInterval(placePlayer,2000); const sc=document.createElement("script"); sc.src="https://www.youtube.com/iframe_api"; sc.async=true; document.head.appendChild(sc); })();
 function toggleMusic(g){
   TT=g;
   found("turntable");
